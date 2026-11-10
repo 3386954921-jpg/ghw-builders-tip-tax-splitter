@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tip Calculator</title>
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem("tip-calculator-theme");
+        if (theme === "dark" || theme === "light") {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+      } catch (error) {}
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --glow: #fff7ed;
+      --card: #fffdf8;
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #e7e0d4;
+      --accent: #0f766e;
+      --input-bg: #ffffff;
+      --input-border: #d6d3d1;
+      --focus-ring: #99f6e4;
+      --error: #b91c1c;
+      --error-bg: #fef2f2;
+      --result-bg: #f0fdfa;
+      --result-border: #ccfbf1;
+      --result-muted-bg: #f5f5f4;
+      --shadow: 0 10px 30px rgba(28, 25, 23, 0.06);
+      --toggle-bg: #ecfdf8;
+      --toggle-border: #99f6e4;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0f1419;
+      --glow: #1a2a32;
+      --card: #182026;
+      --ink: #f5f5f4;
+      --muted: #c4bfb6;
+      --line: #3a4650;
+      --accent: #2dd4bf;
+      --input-bg: #10161c;
+      --input-border: #4b5563;
+      --focus-ring: #5eead4;
+      --error: #fca5a5;
+      --error-bg: #3f1d1d;
+      --result-bg: #134e4a;
+      --result-border: #115e59;
+      --result-muted-bg: #242b33;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --toggle-bg: #134e4a;
+      --toggle-border: #2dd4bf;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background-color: var(--bg);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, var(--glow), var(--bg) 45%);
+      color: var(--ink);
+      line-height: 1.45;
+      padding: max(1rem, env(safe-area-inset-top)) 1rem max(1.5rem, env(safe-area-inset-bottom));
+    }
+
+    main {
+      width: min(28rem, 100%);
+      margin: 0 auto;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin: 0.25rem 0 0.35rem;
+    }
+
+    #theme-toggle {
+      flex: 0 0 auto;
+      min-height: 2.75rem;
+      padding: 0.45rem 0.8rem;
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      background: var(--toggle-bg);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    #theme-toggle:focus {
+      outline: 3px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    .lede {
+      color: var(--muted);
+      margin: 0 0 1.1rem;
+    }
+
+    form {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      padding: 1.1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .fields {
+      display: grid;
+      gap: 0 0.75rem;
+    }
+
+    .field {
+      margin-bottom: 0.95rem;
+    }
+
+    @media (min-width: 22rem) {
+      .fields.pair {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-weight: 650;
+      margin-bottom: 0.35rem;
+    }
+
+    .hint {
+      display: block;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 400;
+      margin-top: 0.15rem;
+    }
+
+    input {
+      width: 100%;
+      min-height: 3rem;
+      font-size: 1rem;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid var(--input-border);
+      border-radius: 0.7rem;
+      background: var(--input-bg);
+      color: var(--ink);
+    }
+
+    input:focus {
+      outline: 3px solid var(--focus-ring);
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
+
+    input[aria-invalid="true"] {
+      border-color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .error {
+      min-height: 1.25rem;
+      margin: 0.3rem 0 0;
+      color: var(--error);
+      font-size: 0.92rem;
+    }
+
+    .results {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 0.4rem;
+    }
+
+    .result {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.85rem 0.95rem;
+      border-radius: 0.8rem;
+      background: var(--result-bg);
+      border: 1px solid var(--result-border);
+    }
+
+    .result span {
+      color: var(--muted);
+    }
+
+    .result strong {
+      font-size: 1.2rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result.muted {
+      background: var(--result-muted-bg);
+      border-color: var(--line);
+    }
+
+    .result.muted strong {
+      color: var(--muted);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <h1>Tip Calculator</h1>
+      <button type="button" id="theme-toggle" role="switch" aria-checked="false">
+        Dark mode
+      </button>
+    </div>
+    <p class="lede">Enter the bill, tip, tax, and how many people are splitting. Totals update as you type.</p>
+
+    <form id="tip-form" novalidate>
+      <div class="field">
+        <label for="bill">Bill amount (CNY)</label>
+        <input
+          id="bill"
+          name="bill"
+          type="number"
+          inputmode="decimal"
+          enterkeyhint="next"
+          min="0"
+          step="0.01"
+          value="100"
+          required
+          autocomplete="off"
+        >
+        <span class="hint">Must be zero or greater. Blank and negative values are not allowed.</span>
+        <p class="error" id="bill-error" role="alert"></p>
+      </div>
+
+      <div class="fields pair">
+        <div class="field">
+          <label for="tip">Tip percentage (%)</label>
+          <input
+            id="tip"
+            name="tip"
+            type="number"
+            inputmode="decimal"
+            enterkeyhint="next"
+            min="0"
+            step="0.01"
+            value="10"
+            required
+            autocomplete="off"
+          >
+          <span class="hint">Must be zero or greater. Blank and negative values are not allowed.</span>
+          <p class="error" id="tip-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="tax">Tax percentage (%)</label>
+          <input
+            id="tax"
+            name="tax"
+            type="number"
+            inputmode="decimal"
+            enterkeyhint="next"
+            min="0"
+            step="0.01"
+            value="0"
+            required
+            autocomplete="off"
+          >
+          <span class="hint">Must be zero or greater. Blank and negative values are not allowed.</span>
+          <p class="error" id="tax-error" role="alert"></p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="people">Number of people</label>
+        <input
+          id="people"
+          name="people"
+          type="number"
+          inputmode="numeric"
+          enterkeyhint="done"
+          min="1"
+          step="1"
+          value="4"
+          required
+          autocomplete="off"
+        >
+        <span class="hint">Must be a whole number of 1 or more.</span>
+        <p class="error" id="people-error" role="alert"></p>
+      </div>
+
+      <div class="results" aria-live="polite">
+        <div class="result" id="tip-amount-card">
+          <span>Tip amount</span>
+          <strong id="tip-amount">CN¥10.00</strong>
+        </div>
+        <div class="result" id="tax-amount-card">
+          <span>Tax amount</span>
+          <strong id="tax-amount">CN¥0.00</strong>
+        </div>
+        <div class="result" id="total-card">
+          <span>Grand total</span>
+          <strong id="total">CN¥110.00</strong>
+        </div>
+        <div class="result" id="per-person-card">
+          <span>Amount per person</span>
+          <strong id="per-person">CN¥27.50</strong>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const moneyFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "CNY",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    const form = document.getElementById("tip-form");
+    const billInput = document.getElementById("bill");
+    const tipInput = document.getElementById("tip");
+    const taxInput = document.getElementById("tax");
+    const peopleInput = document.getElementById("people");
+    const billError = document.getElementById("bill-error");
+    const tipError = document.getElementById("tip-error");
+    const taxError = document.getElementById("tax-error");
+    const peopleError = document.getElementById("people-error");
+    const tipAmountEl = document.getElementById("tip-amount");
+    const taxAmountEl = document.getElementById("tax-amount");
+    const totalEl = document.getElementById("total");
+    const perPersonEl = document.getElementById("per-person");
+    const resultCards = [
+      document.getElementById("tip-amount-card"),
+      document.getElementById("tax-amount-card"),
+      document.getElementById("total-card"),
+      document.getElementById("per-person-card")
+    ];
+
+    function rawValue(input) {
+      return input.value.trim();
+    }
+
+    function parseMoney(raw) {
+      if (raw === "") return { ok: false, message: "Enter an amount. Blank values are not allowed." };
+      const value = Number(raw);
+      if (!Number.isFinite(value)) return { ok: false, message: "Enter a valid number." };
+      if (value < 0) return { ok: false, message: "Negative amounts are not allowed." };
+      return { ok: true, value };
+    }
+
+    function parsePeople(raw) {
+      if (raw === "") return { ok: false, message: "Enter how many people are splitting the bill." };
+      const value = Number(raw);
+      if (!Number.isFinite(value)) return { ok: false, message: "Enter a valid number of people." };
+      if (value === 0) return { ok: false, message: "Number of people cannot be zero." };
+      if (value < 0) return { ok: false, message: "Number of people cannot be negative." };
+      if (!Number.isInteger(value)) return { ok: false, message: "Number of people must be a whole number, not a fraction." };
+      return { ok: true, value };
+    }
+
+    function setFieldState(input, errorEl, message) {
+      const invalid = Boolean(message);
+      input.setAttribute("aria-invalid", invalid ? "true" : "false");
+      errorEl.textContent = message || "";
+    }
+
+    function showResults(tipAmount, taxAmount, total, perPerson) {
+      tipAmountEl.textContent = moneyFormatter.format(tipAmount);
+      taxAmountEl.textContent = moneyFormatter.format(taxAmount);
+      totalEl.textContent = moneyFormatter.format(total);
+      perPersonEl.textContent = moneyFormatter.format(perPerson);
+      resultCards.forEach((card) => card.classList.remove("muted"));
+    }
+
+    function hideResults() {
+      tipAmountEl.textContent = "—";
+      taxAmountEl.textContent = "—";
+      totalEl.textContent = "—";
+      perPersonEl.textContent = "—";
+      resultCards.forEach((card) => card.classList.add("muted"));
+    }
+
+    function calculate() {
+      const bill = parseMoney(rawValue(billInput));
+      const tip = parseMoney(rawValue(tipInput));
+      const tax = parseMoney(rawValue(taxInput));
+      const people = parsePeople(rawValue(peopleInput));
+
+      setFieldState(billInput, billError, bill.ok ? "" : bill.message);
+      setFieldState(tipInput, tipError, tip.ok ? "" : tip.message);
+      setFieldState(taxInput, taxError, tax.ok ? "" : tax.message);
+      setFieldState(peopleInput, peopleError, people.ok ? "" : people.message);
+
+      if (!bill.ok || !tip.ok || !tax.ok || !people.ok) {
+        hideResults();
+        return;
+      }
+
+      const tipAmount = bill.value * (tip.value / 100);
+      const taxAmount = bill.value * (tax.value / 100);
+      const total = bill.value + tipAmount + taxAmount;
+      const perPerson = total / people.value;
+
+      if (![tipAmount, taxAmount, total, perPerson].every(Number.isFinite)) {
+        hideResults();
+        return;
+      }
+
+      showResults(tipAmount, taxAmount, total, perPerson);
+    }
+
+    ["input", "change", "blur"].forEach((eventName) => {
+      form.addEventListener(eventName, calculate);
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      calculate();
+      const firstInvalid = form.querySelector('[aria-invalid="true"]');
+      if (firstInvalid) firstInvalid.focus();
+    });
+
+    calculate();
+
+    const THEME_KEY = "tip-calculator-theme";
+    const themeToggle = document.getElementById("theme-toggle");
+
+    function currentTheme() {
+      return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    }
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      themeToggle.setAttribute("aria-checked", next === "dark" ? "true" : "false");
+      try {
+        localStorage.setItem(THEME_KEY, next);
+      } catch (error) {}
+    }
+
+    applyTheme(currentTheme());
+    themeToggle.addEventListener("click", function () {
+      applyTheme(currentTheme() === "dark" ? "light" : "dark");
+    });
+    themeToggle.addEventListener("keydown", function (event) {
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        applyTheme(currentTheme() === "dark" ? "light" : "dark");
+      }
+    });
+  </script>
+</body>
+</html>
